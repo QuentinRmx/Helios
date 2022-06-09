@@ -1,0 +1,15 @@
+﻿@using TodoApp.Data.Models
+<button class="liDeleteBtn" @onclick="@DeleteCallback">❌</button>
+<input type="checkbox" value="@todo.IsDone" @onchange="@CbIsDoneCallback" />
+<span>@todo.Title</span>
+@code {
+
+    [Parameter]
+    public Todo todo { get; set; }
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> DeleteCallback { get; set; }
+
+    [Parameter]
+    public EventCallback CbIsDoneCallback { get; set; }
+}

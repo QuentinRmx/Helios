@@ -1,0 +1,146 @@
+﻿@page "/"
+@using CommunityToolkit.Maui.Core
+@using TodoApp.Data.Models
+@using TodoApp.Data.Repository
+@using CommunityToolkit.Maui.Alerts;
+
+<div class="debug">@App.TodoRepo.Message</div>
+<h1>To-do list (@todos.Count())</h1>
+<button @onclick="@(async () => await SaveChanges())">Save changes</button>
+
+
+<input placeholder="New To-do..." @bind="newTodoName" />
+<button class="floating-button" @onclick="@(async () => await NewTodo() )">+</button>
+
+<ul class="todoList">
+    @foreach (var todo in todos)
+    {
+        <li class="liTodo">
+            <TodoApp.Components.TodoRow Todo="@todo"
+                                    DeleteCallback="@(async () => await DeleteTodo(todo) )"
+                                    CbIsDoneCallback="@(async () => await UpdateTodo(todo) )" />
+        </li>
+    }
+</ul>
+
+@code {
+
+    // list of all todos.
+    private List<Todo> todos = new();
+
+    private string? newTodoName;
+
+    // Override of async initialized event, should be called once at start-up.
+    protected override async Task OnInitializedAsync()
+    {
+        todos = await App.TodoRepo.GetAll();
+    }
+
+
+    // Callback for + Button.
+    private async Task NewTodo()
+    {
+        if (string.IsNullOrWhiteSpace(newTodoName))
+        {
+            //TODO: manage error
+            return;
+        }
+
+        Todo todo = new Todo
+            {
+                Title = newTodoName
+            };
+        ERepositoryResponse result = await App.TodoRepo.Add(todo);
+        todos.Add(todo);
+        newTodoName = string.Empty;
+    }
+
+    private async Task DeleteTodo(Todo todo)
+    {
+        ERepositoryResponse result = await App.TodoRepo.Delete(todo);
+        todos.Remove(todo);
+    }
+
+    private async Task SaveChanges()
+    {
+        ERepositoryResponse result = ERepositoryResponse.Failure;
+        foreach (Todo t in todos)
+        {
+            result = await App.TodoRepo.Update(t);
+            // todo : manage error.
+        }
+    }
+
+    private async Task UpdateTodo(Todo todo)
+    {
+        ERepositoryResponse result = await App.TodoRepo.Update(todo);
+        if (result is ERepositoryResponse.Success)
+            await ToastTodoRepoResponse("Todo successfully updated");
+        else
+            await ToastTodoRepoResponse($"Error while updating Todo: {todo.Title}");
+    }
+
+    private async Task ToastTodoRepoResponse(string message)
+    {
+        //CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
+        //var snackbarOptions = new SnackbarOptions
+        //    {
+        //        BackgroundColor = Colors.Red,
+        //        TextColor = Colors.Green,
+        //        ActionButtonTextColor = Colors.Yellow,
+        //        CornerRadius = new CornerRadius(10),
+        //        Font = Microsoft.Maui.Font.SystemFontOfSize(14),
+        //        ActionButtonFont = Microsoft.Maui.Font.SystemFontOfSize(14),
+        //        CharacterSpacing = 0.5
+        //    };
+
+        //string text = "This is a Snackbar";
+        //string actionButtonText = "Click Here to Dismiss";
+        ////Action action = async () => await DisplayAlert("Snackbar ActionButton Tapped", "The user has tapped the Snackbar ActionButton", "OK");
+        //TimeSpan duration = TimeSpan.FromSeconds(3);
+
+        //var snackbar = Snackbar.Make(text, null, actionButtonText, duration, snackbarOptions);
+
+        //await snackbar.Show(cancellationTokenSource.Token);
+
+
+        //ToastDuration toastDuration = ToastDuration.Long;
+        //double fontSize = 30d;
+        //var toast = Toast.Make(message, toastDuration, fontSize);
+        //await toast.Show();
+        await ((MainPage)App.MainPageRef).ShowToast(message);
+    }
+}
+
+
+<style>
+    .debug {
+        width: auto;
+        height: auto;
+    }
+
+    .floating-button {
+        /*position: fixed;
+                            bottom: 0;
+                            right: 0;*/
+        border-radius: 15px;
+    }
+
+    .liDeleteBtn {
+        border-radius: 10px;
+        background-color: white;
+        border: 2px;
+    }
+
+    .todoList {
+        margin: 10px;
+        width: 50%;
+    }
+
+    .liTodo {
+        margin: 5px;
+        border: solid 1px;
+        border-color: gray;
+    }
+</style>
