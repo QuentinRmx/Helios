@@ -1,4 +1,4 @@
-# TodoApp
+# Helios
 
 ## Requirements 
 - .NET 6.0
